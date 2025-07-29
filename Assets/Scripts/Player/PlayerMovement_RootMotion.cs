@@ -1,17 +1,15 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class PlayerMovement : MonoBehaviour
+public class PlayerMovement_RootMotion : MonoBehaviour
 {
     [SerializeField] private Animator anim;
-    private Rigidbody rb;
     private InputAction moveInput, jumpInput, crouchInput;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         anim = GetComponent<Animator>();
-        rb = GetComponent<Rigidbody>();
         moveInput = InputSystem.actions.FindAction("Move");
         jumpInput = InputSystem.actions.FindAction("Jump");
         crouchInput = InputSystem.actions.FindAction("Crouch");
