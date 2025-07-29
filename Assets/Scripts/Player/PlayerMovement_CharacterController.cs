@@ -3,6 +3,7 @@ using UnityEngine.InputSystem;
 
 public class PlayerMovement_CharacterController : MonoBehaviour
 {
+    [SerializeField] private GrapplingHook grapplingHook;
     private CharacterController controller;
     private InputAction moveInput, sprintInput;
     private Vector3 playerVelocity;
@@ -13,7 +14,7 @@ public class PlayerMovement_CharacterController : MonoBehaviour
 
     private void Start()
     {
-        controller = gameObject.AddComponent<CharacterController>();
+        controller = gameObject.GetComponent<CharacterController>();
 
         moveInput = InputSystem.actions.FindAction("Move");
         sprintInput = InputSystem.actions.FindAction("Sprint");
@@ -38,12 +39,6 @@ public class PlayerMovement_CharacterController : MonoBehaviour
             transform.forward = move;
         }
 
-        // Jump
-        if (Input.GetButtonDown("Jump") && groundedPlayer)
-        {
-            playerVelocity.y = Mathf.Sqrt(jumpHeight * -2.0f * gravityValue);
-        }
-
         // Apply gravity
         playerVelocity.y += gravityValue * Time.deltaTime;
 
@@ -58,5 +53,30 @@ public class PlayerMovement_CharacterController : MonoBehaviour
     private void OnSprintCancelled(InputAction.CallbackContext ctx)
     {
         playerSpeed = 2f;
+    }
+
+    public bool PullPlayerTowardGrapple(Vector3 grappleTarget, float grappleSpeed, float climbDistance, LineRenderer lineRenderer)
+    {
+        Vector3 dir = (grappleTarget - transform.position).normalized;
+        float dist = Vector3.Distance(transform.position, grappleTarget);
+
+        controller.Move(dir * grappleSpeed);
+
+        lineRenderer.SetPosition(0, transform.position);
+        lineRenderer.SetPosition(1, grappleTarget);
+
+        if (dist < climbDistance)
+        {
+
+            Vector3 offset = new Vector3(0, 1.5f, 0);
+            transform.position = grappleTarget + offset;
+
+            if(controller.isGrounded) controller.Move(Vector3.zero);
+
+            return true;
+
+            // Climb/jump onto roof
+        }
+        return false;
     }
 }

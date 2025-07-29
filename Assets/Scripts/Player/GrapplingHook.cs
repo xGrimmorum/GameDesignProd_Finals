@@ -2,21 +2,22 @@ using UnityEngine;
 
 public class GrapplingHook : MonoBehaviour
 {
-    public Transform player;
-    public float detectionRadius = 20f;
-    public float grappleSpeed = 30f;
-    public float climbDistance = 2f;
-    public LineRenderer lineRenderer;
+    [SerializeField] private Transform player;
+    [SerializeField] private float detectionRadius = 20f;
+    [SerializeField] private float grappleSpeed = 0f;
+    [SerializeField] private float climbDistance = 2f;
+    [SerializeField] private LineRenderer lineRenderer;
 
     private Vector3 grappleTarget;
     private bool isGrappling = false;
     private bool isPulling = false;
-    private Rigidbody playerRb;
+    private bool donePulling = false;
+    private CharacterController playerCtrl;
 
     void Start()
     {
         if (!player) player = transform.root;
-        playerRb = player.GetComponent<Rigidbody>();
+        playerCtrl = player.GetComponent<CharacterController>();
 
         if (!lineRenderer)
         {
@@ -26,6 +27,7 @@ public class GrapplingHook : MonoBehaviour
             lineRenderer.positionCount = 2;
             lineRenderer.enabled = false;
         }
+        lineRenderer.enabled = false;
     }
 
     void Update()
@@ -37,11 +39,17 @@ public class GrapplingHook : MonoBehaviour
 
         if (isPulling)
         {
-            PullPlayerTowardGrapple();
+            donePulling = transform.GetComponentInParent<PlayerMovement_CharacterController>().PullPlayerTowardGrapple(grappleTarget,grappleSpeed, climbDistance, lineRenderer);
+            if (donePulling) 
+            {
+                isGrappling = false;
+                lineRenderer.enabled = false ;
+                isPulling = false;
+            }
         }
     }
 
-    void TryStartGrapple()
+    public void TryStartGrapple()
     {
         Collider[] hits = Physics.OverlapSphere(player.position, detectionRadius);
         Transform nearestRoof = null;
@@ -87,26 +95,5 @@ public class GrapplingHook : MonoBehaviour
         isPulling = true;
     }
 
-    void PullPlayerTowardGrapple()
-    {
-        Vector3 dir = (grappleTarget - player.position).normalized;
-        float dist = Vector3.Distance(player.position, grappleTarget);
 
-        playerRb.linearVelocity = dir * grappleSpeed;
-
-        lineRenderer.SetPosition(0, player.position);
-        lineRenderer.SetPosition(1, grappleTarget);
-
-        if (dist < climbDistance)
-        {
-            // Stop pulling
-            isPulling = false;
-            isGrappling = false;
-            lineRenderer.enabled = false;
-
-            // Climb/jump onto roof
-            player.position = grappleTarget + Vector3.up * 1f;
-            playerRb.linearVelocity = Vector3.zero;
-        }
-    }
 }
